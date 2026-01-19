@@ -1,0 +1,39 @@
+# 依賴套件
+node_modules/
+
+# 環境變數
+.env
+.env.local
+
+# 上傳的檔案
+uploads/
+output/
+
+# Session 檔案（包含登入資訊）
+session.json
+
+# 日誌檔案
+*.log
+npm-debug.log*
+
+# 作業系統檔案
+.DS_Store
+Thumbs.db
+
+# IDE 設定
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 測試圖片（範例）
+mother.png
+anchor.png
+test-*.png
+
+# 暫存檔案
+*.tmp
+*.temp
+
+# 生成報告
+generation-report.json

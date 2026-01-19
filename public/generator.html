@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LINE 貼圖自動生成器</title>
+  <style>
+    :root {
+      --primary-color: #06c755;
+      --primary-hover: #05b34c;
+      --secondary-color: #5b21b6;
+      --danger-color: #ef4444;
+      --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #e0e7ff 100%);
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --text-main: #1e293b;
+      --text-sub: #64748b;
+      --border-color: rgba(226, 232, 240, 0.8);
+      --success-color: #10b981;
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', 'Noto Sans TC', -apple-system, sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      color: var(--text-main);
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-sub);
+      font-size: 16px;
+      font-weight: 400;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: var(--glass-shadow);
+      border: 1px solid var(--border-color);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.1);
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--primary-color);
+      color: white;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .upload-area {
+      border: 2px dashed #cbd5e1;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .upload-area:hover {
+      border-color: var(--primary-color);
+      background: rgba(6, 199, 85, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .upload-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+
+    .upload-text {
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    .preview-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .preview-box {
+      background: white;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .preview-box img {
+      width: 100%;
+      height: 200px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .preview-label {
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+      font-size: 18px;
+      padding: 18px 32px;
+      border-radius: 16px;
+      box-shadow: 0 10px 15px -3px rgba(6, 199, 85, 0.3);
+      width: 100%;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 12px 20px;
+      border-radius: 12px;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+    }
+
+    .selection-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 20px;
+    }
+
+    .selection-card {
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      background: white;
+      border: 2px solid transparent;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .selection-card:hover {
+      border-color: var(--primary-color);
+      background: rgba(6, 199, 85, 0.02);
+      transform: translateY(-4px);
+    }
+
+    .selection-card i {
+      font-size: 48px;
+    }
+
+    .mode-selector {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .mode-option {
+      flex: 1;
+      padding: 16px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .mode-option:hover {
+      border-color: var(--primary-color);
+      background: rgba(6, 199, 85, 0.05);
+    }
+
+    .mode-option input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
+    }
+
+    .mode-option.selected {
+      border-color: var(--primary-color);
+      background: rgba(6, 199, 85, 0.1);
+    }
+
+    select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    details {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--primary-color);
+      user-select: none;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::before {
+      content: '▶ ';
+      display: inline-block;
+      transition: transform 0.3s;
+    }
+
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    .prompt-content {
+      margin-top: 12px;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #333;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      background: white;
+      padding: 12px;
+      border-radius: 4px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .progress-container {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #f0f0f0;
+      border-radius: 15px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .progress-text {
+      text-align: center;
+      color: var(--text-sub);
+      font-size: 14px;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .result-item {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      background: white;
+    }
+
+    .result-item img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .result-title {
+      font-size: 12px;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .result-status {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .status-success {
+      background: #f6ffed;
+      color: var(--success-color);
+    }
+
+    .status-failed {
+      background: #fff1f0;
+      color: var(--danger-color);
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    /* 下載按鈕樣式 */
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: var(--success-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      margin-top: 8px;
+      width: 100%;
+    }
+
+    .btn-download:hover {
+      background: #389e0d;
+      transform: translateY(-1px);
+    }
+
+    .btn-download svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .alert-info {
+      background: #e6f7ff;
+      color: #0958d9;
+      border: 1px solid #91d5ff;
+    }
+
+    .alert-warning {
+      background: #fffbe6;
+      color: #d48806;
+      border: 1px solid #ffe58f;
+    }
+
+    .alert-success {
+      background: #f6ffed;
+      color: #389e0d;
+      border: 1px solid #b7eb8f;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .preview-container {
+        flex-direction: column;
+      }
+
+      .mode-selector {
+        flex-direction: column;
+      }
+
+      .results-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>LINE 貼圖總動員</h1>
+      <p class="subtitle" id="mainSubtitle">快速創作屬於您的 40 張 LINE 貼圖</p>
+    </header>
+
+    <!-- Path Selector -->
+    <div id="selectionSection">
+      <div class="selection-grid">
+        <div class="selection-card" onclick="startFlow(1)">
+          <div style="font-size: 48px;">🎨</div>
+          <div style="font-size: 20px; font-weight: 700;">生成全新 LINE 貼圖</div>
+          <p style="color: var(--text-sub); font-size: 14px;">我只有一張角色照片，想設計新的貼圖風格</p>
+        </div>
+        <div class="selection-card" onclick="startFlow(2)">
+          <div style="font-size: 48px;">🚀</div>
+          <div style="font-size: 20px; font-weight: 700;">既有背景 + 參考圖續作</div>
+          <p style="color: var(--text-sub); font-size: 14px;">我已經有母圖跟滿意的參考圖，直接生產批次</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flow 1: New Creation -->
+    <div id="flow1Section" class="hidden">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+          <div class="card-title" style="margin-bottom: 0;">
+            <span class="step-number">1</span> 角色照片 (母圖)
+          </div>
+          <button class="btn-secondary" onclick="backToSelection()">← 返回路徑選擇</button>
+        </div>
+        <div class="upload-area" id="f1_motherUploadArea">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">點擊上傳或將照片拖曳至此</div>
+          <input type="file" id="f1_motherImageInput" accept="image/*" class="hidden">
+        </div>
+        <div id="f1_motherPreviewContainer" class="hidden">
+          <div class="preview-box" style="max-width: 300px; margin: 30px auto 0;">
+            <img id="f1_motherPreview" src="" alt="Mother image preview">
+            <p class="preview-label">母圖 (唯一身份定義)</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span class="step-number">2</span> 風格方案發想
+        </div>
+        <p style="margin-bottom: 24px; color: var(--text-sub); font-size: 14px;">我們將使用 5
+          種專門調校的寫實素描風格為您產生預覽，請上傳照片後點擊下方按鈕：</p>
+
+        <button id="f1_generateBaseBtn" class="btn-primary" disabled>
+          ✨ 一次發想 5 種風格預覽
+        </button>
+
+        <div id="f1_stylesGrid" class="hidden"
+          style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 32px;">
+          <!-- JS will populate cards here -->
+        </div>
+
+        <div id="f1_regenerateRow" class="hidden"
+          style="margin-top: 40px; text-align: center; border-top: 1px solid var(--border-color); padding-top: 32px;">
+          <p style="color: var(--text-sub); margin-bottom: 16px; font-size: 14px;">對目前的結果不滿意嗎？</p>
+          <button class="btn-secondary" onclick="retryBase()" style="padding: 12px 32px;">♻️ 都不喜歡，重啟風格發想</button>
+        </div>
+      </div>
+
+      <!-- Loading for Base Image -->
+      <div id="f1_baseProcess" class="progress-container">
+        <div class="progress-bar">
+          <div id="f1_progressFill" class="progress-fill" style="width: 0%">0%</div>
+        </div>
+        <p id="f1_progressText" class="progress-text">ChatGPT 正在為您構思第一張圖...</p>
+      </div>
+
+      <!-- Result of Base Image -->
+      <div id="f1_baseResult" class="hidden"
+        style="margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 32px; text-align: center;">
+        <h3 style="margin-bottom: 24px;">風格基準圖生成結果</h3>
+        <img id="f1_baseImage" src=""
+          style="max-width: 300px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); border: 4px solid white;">
+        <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: center;">
+          <button class="btn-secondary" onclick="retryBase()" style="padding: 14px 32px;">❌ 調整 Prompt</button>
+          <button class="btn-primary" onclick="confirmBaseAndGoStep2()" style="width: auto; padding: 14px 48px;">✅
+            完美！以此生產全套</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow 2: Batch Production -->
+  <div id="flow2Section" class="hidden">
+    <!-- Upload Section -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div class="card-title" style="margin-bottom: 0;">
+          <span class="step-number">1</span> 核心基準確認
+        </div>
+        <button class="btn-secondary" onclick="backToSelection()">← 返回路徑選擇</button>
+      </div>
+
+      <div id="f2_uploadAreas" style="display: flex; gap: 20px; margin-bottom: 24px;">
+        <div class="upload-area" id="motherUploadArea" style="flex: 1; padding: 30px;">
+          <div style="font-size: 40px; margin-bottom: 8px;">📷</div>
+          <div class="upload-text">上傳母圖</div>
+        </div>
+        <div class="upload-area" id="anchorUploadArea" style="flex: 1; padding: 30px;">
+          <div style="font-size: 40px; margin-bottom: 8px;">🎯</div>
+          <div class="upload-text">上傳錨點圖</div>
+        </div>
+      </div>
+
+      <div class="preview-container hidden" id="previewContainer">
+        <div class="preview-box">
+          <img id="motherPreview" src="" alt="Mother image preview">
+          <div class="preview-label">母圖 (原始角色)</div>
+          <input type="file" id="motherImageInput" accept="image/*" class="hidden">
+        </div>
+        <div class="preview-box">
+          <img id="anchorPreview" src="" alt="Anchor image preview">
+          <div class="preview-label">錨點圖 (風格參考)</div>
+          <input type="file" id="anchorImageInput" accept="image/*" class="hidden">
+        </div>
+      </div>
+    </div>
+
+    <!-- 原有生成選項區 -->
+    <div class="card">
+      <div class="card-title"><span class="step-number">2</span> 生成設定</div>
+
+      <div class="mode-selector">
+        <label class="mode-option selected" id="modeAll"><input type="radio" name="generateMode" value="all" checked>
+          <div>全部 40 張</div>
+        </label>
+        <label class="mode-option" id="modeMultiple"><input type="radio" name="generateMode" value="multiple">
+          <div>選擇動作</div>
+        </label>
+      </div>
+
+      <div id="multipleSelectContainer" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <label style="font-weight: 600;">選擇要生成的動作</label>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="selectAllBtn"
+              style="padding: 6px 12px; font-size: 12px; background: #f0f0f0;">全選</button>
+            <button type="button" id="deselectAllBtn"
+              style="padding: 6px 12px; font-size: 12px; background: #f0f0f0;">取消</button>
+          </div>
+        </div>
+        <div id="stickerCheckboxList"
+          style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
+        </div>
+        <div style="margin-top: 8px; font-size: 13px; color: var(--text-sub);">已選擇：<span id="selectedCount"
+            style="font-weight:600; color:var(--primary-color);">0</span> 張</div>
+      </div>
+
+      <details style="margin-top: 15px;">
+        <summary>📝 Prompt 編輯 (進階)</summary>
+        <textarea id="promptText"
+          style="width: 100%; min-height: 250px; margin-top: 10px; font-size: 12px; font-family: 'Courier New', monospace; line-height: 1.5; padding: 10px; border-radius: 8px; border: 1px solid #ddd;"></textarea>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button onclick="savePrompt()" style="flex: 1; font-size: 13px; background: #f5f5f5;">💾 儲存</button>
+          <button onclick="resetPrompt()" style="flex: 1; font-size: 13px; background: #fff0f0; color: #f44;">🔄
+            重置</button>
+        </div>
+      </details>
+
+      <button class="btn-primary" id="generateBtn" disabled style="margin-top: 20px;"><span id="generateBtnText">🚀
+          開始生產貼圖</span></button>
+
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+        <p class="progress-text" id="progressText">準備中...</p>
+      </div>
+    </div>
+
+    <div class="card hidden" id="resultsCard">
+      <div class="card-title"><span class="step-number">3</span> 生成結果</div>
+      <button class="btn-primary" id="downloadAllBtn" style="margin-bottom: 15px;">📦 下載全部 (ZIP)</button>
+      <div class="results-grid" id="resultsGrid"></div>
+      <div style="margin-top: 32px; text-align: center; border-top: 1px solid var(--border-color); padding-top: 24px;">
+        <button class="btn-secondary" onclick="resetTaskAndGoHome()" style="padding: 12px 32px;">🏠 回到首頁並開始新任務</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <script>
+    // --- 基礎資料：5 大寫實素描風格範例 ---
+    const STYLES = {
+      style1: {
+        title: "風格範例一｜寫實素描 × Q版比例",
+        desc: "【畫風與用途】\n  - 寫實素描風格\n  - 寫實素描線稿為主，線條乾淨俐亮\n  - 頭部略大（約 1.2～1.3 倍），身體比例簡化\n  - 臉型與五官比例忠於原本人物，不變形\n  - 表情誇張但收斂（大笑、無奈、驚訝）\n  - 色彩：低飽和暖色或灰階＋淡淡腮紅\n  - 陰影以鉛筆暈染感呈現，不用強對比\n  - 適合作為 LINE 原創靜態貼圖"
+      },
+      style2: {
+        title: "風格範例二｜寫實素描 × 表情特化",
+        desc: "【畫風與用途】\n  - 寫實素描風格\n  - 維持寫實素描筆觸\n  - 臉型不變，但「表情幅度拉大」\n  - 眼睛睜大、眉毛角度誇張\n  - 嘴型誇飾（大笑、崩潰、怒）\n  - 可搭配簡單動作線（汗、氣泡、抖動線）\n  - 顏色仍然柔和，不使用螢光或強烈色\n  - 適合作為聊天辨識度高、情緒一眼懂的貼圖"
+      },
+      style3: {
+        title: "風格範例三｜寫實素描 × 單色系主題",
+        desc: "【畫風與用途】\n  - 寫實素描風格\n  - 全套貼圖統一色系（例如：暖灰、咖啡色、藍灰）\n  - 素描線條清楚，但陰影極簡\n  - 表情偏內斂可愛（微笑、淡淡無奈）\n  - 幾乎不加背景，只留白或淡底\n  - 適合作為偏大人用戶、質感成熟的貼圖"
+      },
+      style4: {
+        title: "風格範例四｜寫實素描 × 手寫字融合",
+        desc: "【畫風與用途】\n  - 寫實素描風格\n  - 搭配手寫感文字（粗鉛筆／粉筆感）\n  - 文字與表情互動（貼在旁邊或氣泡內）\n  - 人物維持寫實素描，顏色維持柔和，字體可稍深一點\n  - 適合作為非常「像 LINE 貼圖」的實用款"
+      },
+      style5: {
+        title: "風格範例五｜寫實素描 × 可愛誇張肢體",
+        desc: "【畫風與用途】\n  - 寫實素描風格\n  - 人物比例不變，但肢體動作放大（比讚、揮手、倒地）\n  - 表情與動作同步放大情緒\n  - 線條可略粗一點，增加小尺寸辨識度\n  - 適合作為不用字也能一眼看懂的動作型貼圖"
+      }
+    };
+
+    const DEFAULT_PROMPT_TEMPLATE = `請根據我上傳的「母圖（原始角色範例）」作為 【角色唯一身份定義來源】， 以及我上傳的「錨點圖（已生成且最像的角色圖）」作為 【風格與比例校正參考】。
+
+【角色一致性（最高優先）｜優化合規版】
+- 全套貼圖僅呈現同一位固定角色，不得出現第二角色或角色變體
+- 角色的臉部結構、五官比例、眼型、鼻型、嘴型與整體氣質需在整套貼圖中保持高度一致與穩定
+- 髮型、髮色、服裝、配色與畫風需依據「母圖」所建立的角色設定，並以「錨點圖」作為比例與風格一致性的輔助參考
+- 若母圖與錨點圖之間出現差異，請以母圖所呈現的角色設定為主要依循基準
+- 不得進行角色融合、誇張化處理或風格性美化，請維持角色原有的成熟、內斂外觀特質
+- 不得新增角色、衍生角色，或改變既有角色設定
+
+【畫風與用途】
+- 寫實素描風格
+- 線條清楚、顏色柔和
+- 表情誇張但可愛（不可破壞臉型與五官比例）
+- 適合作為 LINE 原創靜態貼圖
+
+【LINE 官方上架規範（必須遵守）】
+- 圖片尺寸：370 x 320 px
+- 圖片格式：PNG
+- 背景：透明
+- 檔案大小：小於 1MB
+- 角色不可貼邊裁切，四周保留安全邊界
+- 角色需清楚可辨
+- 文字清楚可讀，不可過小
+- 不可包含任何商標、品牌或侵權角色
+
+【構圖要求】
+- 單一角色
+- 半身或全身皆可
+- 角色置中
+- 背景保持透明
+
+【重要限制（請嚴格遵守）】
+- 表情與動作只能改變「肢體與情緒」 不可改變臉型、五官比例或角色氣質
+- 不可加入多餘物件或背景
+- 不可改變畫風或風格
+
+請只輸出「一張符合 LINE 規範的貼圖圖片」`;
+
+    // --- 變數與狀態 ---
+    let motherImageFile = null;
+    let anchorImageFile = null;
+    let allPresets = [];
+    let currentTaskId = null;
+    const LS_TASK_KEY = 'current_sticker_task_id';
+    const LS_F1_TASKS_KEY = 'current_f1_task_ids'; // 儲存 Flow 1 的 {styleKey: taskId}
+
+    // --- 初始化 ---
+    window.addEventListener('load', () => {
+      loadPresets();
+      loadPrompt();
+      checkSavedTask();
+    });
+
+    function checkSavedTask() {
+      // 1. 檢查 Flow 2 (批量生成)
+      const savedF2 = localStorage.getItem(LS_TASK_KEY);
+      if (savedF2) {
+        currentTaskId = savedF2;
+        startFlow(2);
+        document.getElementById('progressContainer').style.display = 'block';
+        pollProgress();
+        return;
+      }
+
+      // 2. 檢查 Flow 1 (風格發想)
+      const savedF1 = localStorage.getItem(LS_F1_TASKS_KEY);
+      if (savedF1) {
+        const tasks = JSON.parse(savedF1);
+        if (Object.keys(tasks).length > 0) {
+          startFlow(1);
+          f1StylesGrid.classList.remove('hidden');
+          f1StylesGrid.innerHTML = '';
+          // 這裡需要母圖路徑才能完整恢復，但如果刷新了，母圖 File 物件會不見
+          // 所以恢復時僅恢復進度卡片，不帶母圖預覽 (或重新上傳)
+          Object.keys(tasks).forEach(key => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.margin = '0';
+            card.innerHTML = `
+              <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--primary-color);">${STYLES[key].title}</div>
+              <div id="img_container_${key}" style="width:100%; aspect-ratio:1; background:#f8fafc; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #e2e8f0; position:relative;">
+                <div id="loader_${key}" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(59,130,246,0.05); color:var(--primary-color); font-size:13px; font-weight:600;">恢復中...</div>
+                <img id="img_${key}" class="hidden" style="width:100%; height:100%; object-fit:cover;">
+              </div>
+              <div id="status_${key}" style="font-size:12px; margin-top:10px; color:var(--text-sub); text-align:center;">恢復進度中...</div>
+              <button id="btn_${key}" class="btn-primary hidden" style="margin-top:12px; font-size:13px; padding:10px;">✅ 挑選此風格</button>
+            `;
+            f1StylesGrid.appendChild(card);
+            const selectBtn = card.querySelector(`#btn_${key}`);
+            selectBtn.onclick = () => selectStyle(key);
+
+            const finalPrompt = injectStyleIntoPrompt(DEFAULT_PROMPT_TEMPLATE, STYLES[key].desc);
+            pollStyleStatus(key, tasks[key], finalPrompt);
+          });
+        }
+      }
+    }
+
+    // --- 導引路徑切換 ---
+    function startFlow(num) {
+      document.getElementById('selectionSection').classList.add('hidden');
+      if (num === 1) {
+        document.getElementById('flow1Section').classList.remove('hidden');
+        document.getElementById('flow2Section').classList.add('hidden');
+        document.getElementById('mainSubtitle').textContent = "Step: 設計新角色的風格與特徵";
+      } else {
+        document.getElementById('flow2Section').classList.remove('hidden');
+        document.getElementById('flow1Section').classList.add('hidden');
+        document.getElementById('mainSubtitle').textContent = "Step: 正式批次生產 40 張貼圖";
+      }
+    }
+
+    function backToSelection() {
+      document.getElementById('selectionSection').classList.remove('hidden');
+      document.getElementById('flow1Section').classList.add('hidden');
+      document.getElementById('flow2Section').classList.add('hidden');
+      document.getElementById('mainSubtitle').textContent = "快速創作屬於您的 40 張 LINE 貼圖";
+    }
+
+    function resetTaskAndGoHome() {
+      if (confirm('確定要回到首頁嗎？目前的任務記錄將會被清除。')) {
+        localStorage.removeItem(LS_TASK_KEY);
+        currentTaskId = null;
+        window.location.reload(); // 重新整理以重置所有狀態
+      }
+    }
+
+    // --- Flow 1: 全新創作邏輯 ---
+    // --- Flow 1: 全新創作邏輯 ---
+    const f1MotherInput = document.getElementById('f1_motherImageInput');
+    const f1MotherPreview = document.getElementById('f1_motherPreview');
+    const f1GenBtn = document.getElementById('f1_generateBaseBtn');
+    const f1StylesGrid = document.getElementById('f1_stylesGrid');
+    const f1RegenRow = document.getElementById('f1_regenerateRow');
+
+    document.getElementById('f1_motherUploadArea').onclick = () => f1MotherInput.click();
+    f1MotherInput.onchange = (e) => {
+      if (e.target.files[0]) {
+        motherImageFile = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (le) => {
+          f1MotherPreview.src = le.target.result;
+          document.getElementById('f1_motherPreviewContainer').classList.remove('hidden');
+          checkF1Ready();
+          initStyleGrid(); // 上傳後即刻初始化 5 個可編輯方塊
+        };
+        reader.readAsDataURL(motherImageFile);
+      }
+    };
+
+    function initStyleGrid() {
+      f1StylesGrid.classList.remove('hidden');
+      f1StylesGrid.innerHTML = '';
+      Object.keys(STYLES).forEach(key => {
+        createStyleCard(key, STYLES[key]);
+      });
+    }
+
+    function checkF1Ready() {
+      f1GenBtn.disabled = !motherImageFile;
+    }
+
+    function injectStyleIntoPrompt(template, newStylePart) {
+      const regex = /【畫風與用途】[\s\S]*?(?=\n【|$)/;
+      return template.replace(regex, newStylePart);
+    }
+
+    f1GenBtn.onclick = async () => {
+      try {
+        f1GenBtn.disabled = true;
+        f1RegenRow.classList.add('hidden');
+        localStorage.removeItem(LS_F1_TASKS_KEY);
+
+        // 1. 上傳母圖 (如果還沒有路徑)
+        let mPath = window.f1_currentMPath;
+        if (!mPath) {
+          const fd = new FormData();
+          fd.append('motherImage', motherImageFile);
+          fd.append('anchorImage', motherImageFile);
+          const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+          const upData = await upRes.json();
+          if (!upData.success) throw new Error(upData.error);
+          mPath = upData.files.motherImage.path;
+          window.f1_currentMPath = mPath;
+        }
+
+        // 2. 對 5 種風格同時啟動任務
+        Object.keys(STYLES).forEach((key) => {
+          startStyleTask(key, mPath);
+        });
+
+      } catch (err) { alert(err.message); f1GenBtn.disabled = false; }
+    };
+
+    function createStyleCard(key, styleObj) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.margin = '0';
+      card.style.display = 'flex';
+      card.style.flexDirection = 'column';
+      card.innerHTML = `
+        <input id="title_${key}" type="text" value="${styleObj.title}" 
+               style="width:100%; border:none; background:transparent; font-weight:700; margin-bottom:12px; font-size:15px; color:var(--primary-color); outline:none; border-bottom:1px solid transparent;"
+               onfocus="this.style.borderBottom='1px solid var(--primary-color)'" 
+               onblur="this.style.borderBottom='1px solid transparent'">
+        
+        <div id="img_container_${key}" style="width:100%; aspect-ratio:1; background:#f8fafc; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #e2e8f0; position:relative;">
+          <div id="loader_${key}" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(59,130,246,0.05); color:var(--primary-color); font-size:13px; font-weight:600;">待啟動</div>
+          <img id="img_${key}" class="hidden" style="width:100%; height:100%; object-fit:cover;">
+        </div>
+        
+        <textarea id="desc_${key}" style="width:100%; flex:1; min-height:120px; font-size:12px; margin-top:12px; padding:8px; border-radius:8px; border:1px solid #eee; resize:none; font-family:inherit;">${styleObj.desc}</textarea>
+        
+        <div id="status_${key}" style="font-size:12px; margin-top:10px; color:var(--text-sub); text-align:center;">尚未生成</div>
+        
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button id="regen_${key}" class="btn-secondary" style="font-size:12px; padding:10px; flex:1;">♻️ 重新發想</button>
+          <button id="btn_${key}" class="btn-primary hidden" style="font-size:12px; padding:10px; flex:1.5;">✅ 挑選此風格</button>
+        </div>
+      `;
+      f1StylesGrid.appendChild(card);
+
+      const selectBtn = card.querySelector(`#btn_${key}`);
+      selectBtn.onclick = () => selectStyle(key);
+
+      const regenBtn = card.querySelector(`#regen_${key}`);
+      regenBtn.onclick = async () => {
+        if (!motherImageFile) return alert('請先上傳母圖');
+
+        // 如果沒有上傳過
+        if (!window.f1_currentMPath) {
+          const fd = new FormData();
+          fd.append('motherImage', motherImageFile);
+          fd.append('anchorImage', motherImageFile);
+          const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+          const upData = await upRes.json();
+          window.f1_currentMPath = upData.files.motherImage.path;
+        }
+        startStyleTask(key, window.f1_currentMPath);
+      };
+    }
+
+    async function startStyleTask(key, mPath) {
+      const statusText = document.getElementById(`status_${key}`);
+      const loader = document.getElementById(`loader_${key}`);
+      const regenBtn = document.getElementById(`regen_${key}`);
+      const descArea = document.getElementById(`desc_${key}`);
+
+      try {
+        statusText.textContent = '任務啟動中...';
+        loader.textContent = '🚀 請求發送中';
+        regenBtn.disabled = true;
+
+        const currentDesc = descArea.value.trim();
+        const finalPrompt = injectStyleIntoPrompt(DEFAULT_PROMPT_TEMPLATE, currentDesc);
+
+        const startRes = await fetch('/api/generate/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            motherImagePath: mPath,
+            anchorImagePath: mPath,
+            selectedPresets: [0],
+            customPrompt: finalPrompt
+          })
+        });
+        const startData = await startRes.json();
+
+        // 儲存 F1 任務到 LS
+        let tasks = JSON.parse(localStorage.getItem(LS_F1_TASKS_KEY) || '{}');
+        tasks[key] = startData.taskId;
+        localStorage.setItem(LS_F1_TASKS_KEY, JSON.stringify(tasks));
+
+        pollStyleStatus(key, startData.taskId, finalPrompt);
+      } catch (e) {
+        statusText.textContent = '啟動失敗';
+        regenBtn.disabled = false;
+      }
+    }
+
+    function pollStyleStatus(key, taskId, finalPrompt) {
+      const statusText = document.getElementById(`status_${key}`);
+      const loader = document.getElementById(`loader_${key}`);
+      const img = document.getElementById(`img_${key}`);
+      const btn = document.getElementById(`btn_${key}`);
+      const regenBtn = document.getElementById(`regen_${key}`);
+
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/generate/status/${taskId}`);
+          const data = await res.json();
+          const t = data.task;
+          if (t.status === 'running') {
+            statusText.textContent = 'ChatGPT 生成中...';
+            loader.textContent = '🖌️ 繪製中';
+          } else if (t.status === 'completed' && t.results.length > 0) {
+            clearInterval(interval);
+            regenBtn.disabled = false;
+            const ok = t.results.find(r => r.success);
+            if (ok) {
+              img.src = '/' + ok.path;
+              img.classList.remove('hidden');
+              loader.classList.add('hidden');
+              statusText.textContent = '生成成功！';
+              btn.classList.remove('hidden');
+              btn.setAttribute('data-path', ok.path);
+              btn.setAttribute('data-prompt', finalPrompt);
+              checkAllFinished();
+            } else {
+              statusText.textContent = '生成失敗';
+            }
+          } else if (t.status === 'failed') {
+            clearInterval(interval);
+            regenBtn.disabled = false;
+            statusText.textContent = '任務出錯';
+            checkAllFinished();
+          }
+        } catch (e) { }
+      }, 4000);
+    }
+
+    function checkAllFinished() {
+      const allCards = Object.keys(STYLES);
+      const finished = allCards.every(key => {
+        const txt = document.getElementById(`status_${key}`).textContent;
+        return txt.includes('成功') || txt.includes('失敗') || txt.includes('出錯');
+      });
+      if (finished) {
+        f1RegenRow.classList.remove('hidden');
+        f1GenBtn.disabled = false;
+        f1GenBtn.textContent = '✨ 重新發想 5 種風格';
+      }
+    }
+
+    function selectStyle(key) {
+      localStorage.removeItem(LS_F1_TASKS_KEY); // 選中後清除發想快取
+      const btn = document.getElementById(`btn_${key}`);
+      window.currentAnchorPath = btn.getAttribute('data-path');
+      window.currentPrompt = btn.getAttribute('data-prompt');
+
+      document.getElementById('anchorPreview').src = '/' + window.currentAnchorPath;
+      if (motherImageFile) {
+        document.getElementById('motherPreview').src = f1MotherPreview.src;
+      }
+      document.getElementById('previewContainer').classList.remove('hidden');
+      document.getElementById('f2_uploadAreas').classList.add('hidden');
+      document.getElementById('promptText').value = window.currentPrompt;
+      window.usePreUploadedAnchor = window.currentAnchorPath;
+
+      startFlow(2);
+      updateGenerateButton();
+    }
+
+    function retryBase() {
+      if (confirm('確定要清除目前的預覽並重新發想嗎？')) {
+        localStorage.removeItem(LS_F1_TASKS_KEY);
+        f1StylesGrid.innerHTML = '';
+        f1GenBtn.disabled = false;
+        f1GenBtn.click();
+      }
+    }
+
+    // --- Flow 2: 批次生產邏輯 ---
+    const motherImageInput = document.getElementById('motherImageInput');
+    const anchorImageInput = document.getElementById('anchorImageInput');
+    const generateBtn = document.getElementById('generateBtn');
+    const generateBtnText = document.getElementById('generateBtnText');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const resultsCard = document.getElementById('resultsCard');
+    const promptText = document.getElementById('promptText');
+
+    document.getElementById('motherUploadArea').onclick = () => motherImageInput.click();
+    document.getElementById('anchorUploadArea').onclick = () => anchorImageInput.click();
+
+    motherImageInput.onchange = (e) => handleFile(e, 'mother');
+    anchorImageInput.onchange = (e) => handleFile(e, 'anchor');
+
+    function handleFile(e, type) {
+      if (e.target.files[0]) {
+        const file = e.target.files[0];
+        if (type === 'mother') motherImageFile = file;
+        else { anchorImageFile = file; window.usePreUploadedAnchor = null; }
+        const r = new FileReader();
+        r.onload = (le) => {
+          document.getElementById(type + 'Preview').src = le.target.result;
+          document.getElementById('previewContainer').classList.remove('hidden');
+          document.getElementById('f2_uploadAreas').classList.add('hidden');
+          updateGenerateButton();
+        };
+        r.readAsDataURL(file);
+      }
+    }
+
+    async function loadPresets() {
+      const res = await fetch('/presets.json');
+      allPresets = await res.json();
+      const list = document.getElementById('stickerCheckboxList');
+      list.innerHTML = '';
+
+      let currentCategory = "";
+      allPresets.forEach((p, i) => {
+        // 插入分類標題
+        if (p.category && p.category !== currentCategory) {
+          currentCategory = p.category;
+          const header = document.createElement('div');
+          header.style.cssText = 'padding: 12px 8px 4px; font-weight: 800; color: var(--primary-color); font-size: 14px; border-bottom: 2px solid #f1f5f9; margin-top: 10px; background: #fafafa;';
+          header.textContent = `📂 ${currentCategory}`;
+          list.appendChild(header);
+        }
+
+        const lbl = document.createElement('label');
+        lbl.style.cssText = 'display: flex; align-items: center; padding: 10px 8px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s;';
+        lbl.onmouseover = () => lbl.style.background = '#f8fafc';
+        lbl.onmouseout = () => lbl.style.background = 'transparent';
+
+        lbl.innerHTML = `<input type="checkbox" value="${i}" class="sticker-checkbox" style="width:18px; height:18px; margin-right:12px;"> 
+                         <span style="font-size: 14px;">${p.title}</span>`;
+        lbl.querySelector('input').onchange = updateSelectedCount;
+        list.appendChild(lbl);
+      });
+    }
+
+    function updateSelectedCount() {
+      const cnt = document.querySelectorAll('.sticker-checkbox:checked').length;
+      document.getElementById('selectedCount').textContent = cnt;
+      updateGenerateButton();
+    }
+
+    document.getElementById('selectAllBtn').onclick = () => {
+      document.querySelectorAll('.sticker-checkbox').forEach(c => c.checked = true);
+      updateSelectedCount();
+    };
+    document.getElementById('deselectAllBtn').onclick = () => {
+      document.querySelectorAll('.sticker-checkbox').forEach(c => c.checked = false);
+      updateSelectedCount();
+    };
+
+    function updateGenerateButton() {
+      const generateMode = document.querySelector('input[name="generateMode"]:checked');
+      const mode = generateMode ? generateMode.value : 'all';
+      const hasImg = motherImageFile && (anchorImageFile || window.usePreUploadedAnchor);
+      const count = document.querySelectorAll('.sticker-checkbox:checked').length;
+      if (mode === 'all') {
+        generateBtnText.textContent = '🚀 開始批次生成全套 40 張';
+        generateBtn.disabled = !hasImg;
+      } else {
+        generateBtnText.textContent = count > 0 ? `🚀 生成選中的 ${count} 張` : '🚀 請勾選動作';
+        generateBtn.disabled = !(hasImg && count > 0);
+      }
+    }
+
+    document.querySelectorAll('input[name="generateMode"]').forEach(r => {
+      r.onchange = () => {
+        const container = document.getElementById('multipleSelectContainer');
+        if (r.value === 'multiple') {
+          container.classList.remove('hidden');
+          document.getElementById('modeMultiple').classList.add('selected');
+          document.getElementById('modeAll').classList.remove('selected');
+        } else {
+          container.classList.add('hidden');
+          document.getElementById('modeAll').classList.add('selected');
+          document.getElementById('modeMultiple').classList.remove('selected');
+        }
+        updateGenerateButton();
+      };
+    });
+
+    generateBtn.onclick = async () => {
+      try {
+        generateBtn.disabled = true;
+        document.getElementById('progressContainer').style.display = 'block';
+
+        let mPath, aPath;
+        if (window.usePreUploadedAnchor && !anchorImageFile) {
+          const fd = new FormData();
+          fd.append('motherImage', motherImageFile);
+          fd.append('anchorImage', motherImageFile);
+          const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+          const upData = await upRes.json();
+          mPath = upData.files.motherImage.path;
+          aPath = window.usePreUploadedAnchor;
+        } else {
+          const fd = new FormData();
+          fd.append('motherImage', motherImageFile);
+          fd.append('anchorImage', anchorImageFile);
+          const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+          const upData = await upRes.json();
+          if (!upData.success) throw new Error(upData.error);
+          mPath = upData.files.motherImage.path;
+          aPath = upData.files.anchorImage.path;
+        }
+
+        const mode = document.querySelector('input[name="generateMode"]:checked').value;
+        const selected = mode === 'all' ? [] : Array.from(document.querySelectorAll('.sticker-checkbox:checked')).map(c => parseInt(c.value));
+
+        const startRes = await fetch('/api/generate/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            motherImagePath: mPath,
+            anchorImagePath: aPath,
+            selectedPresets: selected,
+            customPrompt: promptText.value.trim()
+          })
+        });
+        const startData = await startRes.json();
+        currentTaskId = startData.taskId;
+        localStorage.setItem(LS_TASK_KEY, currentTaskId);
+        pollProgress();
+      } catch (e) { alert(e.message); generateBtn.disabled = false; }
+    };
+
+    async function pollProgress() {
+      if (!currentTaskId) return;
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/generate/status/${currentTaskId}`);
+          const data = await res.json();
+          const t = data.task;
+          if (t.status === 'running') {
+            const p = Math.round((t.progress / t.total) * 100);
+            progressFill.style.width = p + '%';
+            progressFill.textContent = p + '%';
+            progressText.textContent = `⚡ 任務加速中: [${t.progress}/${t.total}] ${t.currentSticker}`;
+
+            // 即時更新結果網格
+            if (t.results && t.results.length > 0) {
+              showResults(t.results, true);
+            }
+          } else if (t.status === 'completed') {
+            clearInterval(interval);
+            showResults(t.results);
+            // 不再自動移除 LS_TASK_KEY，讓使用者重新整理也能看到結果
+          } else if (t.status === 'failed') {
+            clearInterval(interval);
+            alert("任務中斷: " + t.error);
+            generateBtn.disabled = false;
+            // 失敗也保留，讓使用者知道發生什麼事
+          }
+        } catch (e) { }
+      }, 3000);
+    }
+
+    function showResults(results, progressive = false) {
+      const hasSuccess = results.some(r => r.success);
+      if (!progressive || hasSuccess) resultsCard.classList.remove('hidden');
+      // 如果不是漸進式更新，則清空網格；或是網格為空時
+      if (!progressive || resultsGrid.innerHTML === '') {
+        resultsGrid.innerHTML = '';
+      }
+
+      // 漸進式更新時，我們只添加「尚未在網格中」的圖
+      results.forEach(r => {
+        const existingImg = resultsGrid.querySelector(`img[src="/${r.path}"]`);
+        if (existingImg) return; // 已經顯示過了
+
+        const div = document.createElement('div');
+        div.className = 'result-item';
+        div.style.background = 'white';
+        div.style.padding = '12px';
+        div.style.borderRadius = '12px';
+        div.style.textAlign = 'center';
+        div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
+        if (r.success) {
+          const fname = r.path.split('/').pop();
+          div.innerHTML = `<img src="/${r.path}" style="width:100%; border-radius:8px;">
+                           <div style="font-size:12px; margin:8px 0; font-weight:600;">${r.title}</div>
+                           <button class="btn-download" onclick="downloadSingle('${fname}')">下載</button>`;
+        } else {
+          div.innerHTML = `<div style="height:100px; display:flex; align-items:center; justify-content:center; color:#ccc;">FAILED</div>
+                           <div style="font-size:12px; margin:8px 0;">${r.title}</div>
+                           <span style="color:var(--danger-color); font-size:11px;">生成異常</span>`;
+        }
+        resultsGrid.appendChild(div);
+      });
+      generateBtn.disabled = false;
+    }
+
+    function downloadSingle(f) { window.location.href = `/api/download/${currentTaskId}/${f}`; }
+    document.getElementById('downloadAllBtn').onclick = () => { window.location.href = `/api/download-all/${currentTaskId}`; };
+
+    function savePrompt() { localStorage.setItem('customPrompt', promptText.value); alert('指令已儲存至瀏覽器'); }
+    function resetPrompt() { if (confirm('確定要恢復預設指令嗎？')) { promptText.value = DEFAULT_PROMPT_TEMPLATE; localStorage.removeItem('customPrompt'); } }
+    function loadPrompt() {
+      const s = localStorage.getItem('customPrompt');
+      promptText.value = s ? s : DEFAULT_PROMPT_TEMPLATE;
+    }
+  </script>
+</body>
+
+</html>
